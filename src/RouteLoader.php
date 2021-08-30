@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Noem\Http;
 
-
 use FastRoute\RouteCollector;
 use Invoker\InvokerInterface;
 use Noem\Http\Attribute\Route;
