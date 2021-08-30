@@ -49,10 +49,6 @@
     {
       "type": "vcs",
       "url": "https://github.com/Biont/event-dispatcher"
-    },
-    {
-      "type": "path",
-      "url": "../integration-test"
     }
   ]
 }
