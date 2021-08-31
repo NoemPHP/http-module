@@ -7,16 +7,19 @@ use Invoker\InvokerInterface;
 use Noem\Container\Attribute\Id;
 use Noem\Container\Attribute\Tag;
 use Noem\Container\Attribute\Tagged;
+use Noem\Container\Attribute\WithAttr;
+use Noem\Container\AttributeAwareContainer;
 use Noem\Container\Container;
 use Noem\Container\ContainerHtmlRenderer;
 use Noem\Http\Attribute\Route;
+use Noem\Http\HttpRequestEvent;
 use Noem\Http\RouteLoader;
-use Noem\State\StateMachine;
 use Noem\StateMachineModule\Attribute\Action;
 use Noem\StateMachineModule\Attribute\OnEntry;
 use Noem\StateMachineModule\Attribute\State;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7Server\ServerRequestCreator;
+use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
@@ -39,9 +42,9 @@ return [
             #[Id('http.request-handler')] RequestHandlerInterface $requestHandler,
             \Noem\Http\ResponseEmitter $emitter
         ) => function (
-            ServerRequestInterface $request
+            HttpRequestEvent $request
         ) use ($requestHandler, $emitter) {
-            $emitter->emit($requestHandler->handle($request));
+            $request->setResponse($requestHandler->handle($request->request()));
         },
     'http.request' =>
         function () {
@@ -52,61 +55,65 @@ return [
 
             return $creator->fromGlobals();
         },
-    'http.home-route' =>
-        #[Tag('route')]
-        fn(Container $container) => #[Route('/')] function (ServerRequestInterface $r) use ($container) {
-            $containerContents = (new ContainerHtmlRenderer($container->report()))->render();
-            echo <<<HTML
-<html>
-    <head></head>
-    <body>
-        <h1>Hello World, Noem here</h1>
-        <style>
-        thead,
-tfoot {
-    background-color: #3f87a6;
-    color: #fff;
-}
-
-tbody {
-    background-color: #e4f0f5;
-}
-
-caption {
-    padding: 10px;
-    caption-side: bottom;
-}
-
-table {
-    border-collapse: collapse;
-    border: 2px solid rgb(200, 200, 200);
-    letter-spacing: 1px;
-    font-family: sans-serif;
-    font-size: .8rem;
-}
-
-td,
-th {
-    border: 1px solid rgb(190, 190, 190);
-    padding: 5px 10px;
-}
-
-td {
-    text-align: center;
-}
-</style>
-        {$containerContents}
-    </body>
-</html>
-HTML;
-//            var_dump(func_get_args());
+    'http.request.event' =>
+        function (#[Id('http.request')] ServerRequestInterface $request) {
+            return new HttpRequestEvent($request);
         },
-    RouteLoader::class => fn(InvokerInterface $i) => new RouteLoader($i),
+//    'http.home-route' =>
+//        #[Route('/')]
+//        fn(Container $container) => function (ServerRequestInterface $r) use ($container) {
+//            $containerContents = (new ContainerHtmlRenderer($container->report()))->render();
+//            echo <<<HTML
+//<html>
+//    <head></head>
+//    <body>
+//        <h1>Hello World, Noem here</h1>
+//        <style>
+//        thead,
+//tfoot {
+//    background-color: #3f87a6;
+//    color: #fff;
+//}
+//
+//tbody {
+//    background-color: #e4f0f5;
+//}
+//
+//caption {
+//    padding: 10px;
+//    caption-side: bottom;
+//}
+//
+//table {
+//    border-collapse: collapse;
+//    border: 2px solid rgb(200, 200, 200);
+//    letter-spacing: 1px;
+//    font-family: sans-serif;
+//    font-size: .8rem;
+//}
+//
+//td,
+//th {
+//    border: 1px solid rgb(190, 190, 190);
+//    padding: 5px 10px;
+//}
+//
+//td {
+//    text-align: center;
+//}
+//</style>
+//        {$containerContents}
+//    </body>
+//</html>
+//HTML;
+//        },
+    'http.route-loader' => function (InvokerInterface $i, Container $c) {
+        $routeIds = $c->getIdsWithAttribute(Route::class);
+        return new RouteLoader($i, $c, ...$routeIds);
+    },
     'http.fast-route' =>
         #[Tag('http.middleware')]
-        fn(RouteLoader $loader, #[Tagged('route')] callable ...$routes) => new Middlewares\FastRoute(
-            simpleDispatcher(fn(RouteCollector $r) => $loader($r, ...$routes))
-        ),
+        fn(#[Id('http.route-loader')] $loader) => new Middlewares\FastRoute(simpleDispatcher($loader)),
     'http.request-handler' => function (
         #[Tagged('http.middleware')] MiddlewareInterface ...$handlers
     ): RequestHandlerInterface {
@@ -121,10 +128,10 @@ HTML;
     'request-listener' =>
         #[Tag('event-listener')]
         fn(
-            #[Id('state-machine')] StateMachine $m
+            ContainerInterface $c
         ) => function (
-            ServerRequestInterface $request,
-        ) use ($m) {
-            $m->action($request);
+            HttpRequestEvent $request,
+        ) use ($c) {
+            $c->get('state-machine')->action($request);
         }
 ];

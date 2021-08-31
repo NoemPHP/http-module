@@ -6,6 +6,8 @@ namespace Noem\Http;
 
 use FastRoute\RouteCollector;
 use Invoker\InvokerInterface;
+use Noem\Container\AttributeAwareContainer;
+use Noem\Container\Container;
 use Noem\Http\Attribute\Route;
 use Psr\Http\Message\ServerRequestInterface;
 use ReflectionFunction;
@@ -13,21 +15,28 @@ use Relay\RequestHandler;
 
 class RouteLoader
 {
-    public function __construct(private InvokerInterface $invoker)
-    {
+    /**
+     * @var string[]
+     */
+    private array $routeIds;
+
+    public function __construct(
+        private InvokerInterface $invoker,
+        private Container $container,
+        string ...$routeIds
+    ) {
+        $this->routeIds = $routeIds;
     }
 
-    public function __invoke(RouteCollector $r, callable ...$routes)
+    public function __invoke(RouteCollector $r)
     {
-        foreach ($routes as $handler) {
-            $refFunc = new ReflectionFunction($handler);
-            $atts = $refFunc->getAttributes(Route::class);
-            if (empty($atts)) {
+        foreach ($this->routeIds as $id) {
+            $attributesOfId = $this->container->getAttributesOfId($id, Route::class);
+            if (empty($attributesOfId)) {
                 continue;
             }
-            $att = null;
-            foreach ($atts as $att) {
-                $att = $att->newInstance();
+            $handler = $this->container->get($id);
+            foreach ($attributesOfId as $att) {
                 assert($att instanceof Route);
                 switch ($att->method) {
                     case 'GET':

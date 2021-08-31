@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 
+use Noem\Http\Attribute\Route;
+use Noem\Http\HttpRequestEvent;
 use Noem\Http\ResponseEmitter;
 use Noem\IntegrationTest\NoemFrameworkTestCase;
 use Nyholm\Psr7\Factory\Psr17Factory;
@@ -10,10 +12,10 @@ use Nyholm\Psr7Server\ServerRequestCreator;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\ServerRequestInterface;
 
 class HttpRequestTest extends NoemFrameworkTestCase
 {
-    private ?ResponseInterface $response = null;
 
     public function setUp(): void
     {
@@ -23,15 +25,13 @@ class HttpRequestTest extends NoemFrameworkTestCase
 
     public function testEmitsResponse()
     {
-        $e = $this->getContainer()->get(EventDispatcherInterface::class);
-
-        $e->dispatch($this->createRequest());
-        $this->assertNotNull($this->response);
-        $this->assertInstanceOf(ResponseInterface::class, $this->response);
-        $this->assertSame(200, $this->response->getStatusCode());
+        $response = $this->dispatchRequest($this->createRequest());
+        $this->assertNotNull($response);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertSame(200, $response->getStatusCode());
     }
 
-    private function createRequest(string $path = '/'): RequestInterface
+    protected function createRequest(string $path = '/'): ServerRequestInterface
     {
         $creator = new ServerRequestCreator(...array_fill(0, 4, new Psr17Factory()));
         return $creator->fromArrays([
@@ -42,28 +42,28 @@ class HttpRequestTest extends NoemFrameworkTestCase
 
     public function testEmits404ForUnknownRoute()
     {
-        $e = $this->getContainer()->get(EventDispatcherInterface::class);
+        $response = $this->dispatchRequest($this->createRequest('/nowhere'));
+        $this->assertNotNull($response);
+        $this->assertInstanceOf(ResponseInterface::class, $response);
+        $this->assertSame(404, $response->getStatusCode());
+    }
 
-        $e->dispatch($this->createRequest('/nowhere'));
-        $this->assertNotNull($this->response);
-        $this->assertInstanceOf(ResponseInterface::class, $this->response);
-        $this->assertSame(404, $this->response->getStatusCode());
+    public function dispatchRequest(ServerRequestInterface $request): ResponseInterface
+    {
+        $dispatcher = $this->getContainer()->get(EventDispatcherInterface::class);
+        $requestEvent = new HttpRequestEvent($request);
+        $dispatcher->dispatch($requestEvent);
+        return $requestEvent->response();
     }
 
     protected function getFactories(): array
     {
         return [
-            ResponseEmitter::class => fn() => $this->mockEmitter()
+            'someroute' =>
+                #[Route('/')]
+                fn() => function () {
+                }
         ];
-    }
-
-    private function mockEmitter()
-    {
-        $emitter = Mockery::mock(ResponseEmitter::class);
-        $emitter->shouldReceive('emit')->andReturnUsing(function ($r) {
-            $this->response = $r;
-        });
-        return $emitter;
     }
 
     protected function getExtensions(): array
