@@ -38,23 +38,17 @@ class RouteLoader
             $handler = $this->container->get($id);
             foreach ($attributesOfId as $att) {
                 assert($att instanceof Route);
-                switch ($att->method) {
-                    case 'GET':
-                        $r->get(
-                            $att->path,
-                            function (
-                                ServerRequestInterface $request,
-                                RequestHandler $requestHandler
-                            ) use ($handler) {
-                                $this->invoker->call(
-                                    $handler,
-                                    [
-                                        ServerRequestInterface::class => $request
-                                    ]
-                                );
-                            }
-                        );
-                }
+                $r->addRoute($att->method, $att->path, function (
+                    ServerRequestInterface $request,
+                    RequestHandler $requestHandler
+                ) use ($handler) {
+                    $this->invoker->call(
+                        $handler,
+                        [
+                            ServerRequestInterface::class => $request
+                        ]
+                    );
+                });
             }
         }
     }
