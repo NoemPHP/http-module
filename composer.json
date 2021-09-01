@@ -12,6 +12,7 @@
     }
   ],
   "require": {
+    "php": "^8.0",
     "nyholm/psr7": "^1.4",
     "nyholm/psr7-server": "^1.0",
     "middlewares/emitter": "^1.0",
