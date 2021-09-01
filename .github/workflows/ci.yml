@@ -30,7 +30,7 @@ jobs:
           - "highest"
         include:
           - php-version: "8.1"
-            composer-options: "--ignore-platform-reqs"
+            #composer-options: "--ignore-platform-reqs"
 
     steps:
       - name: "Extract branch name"
