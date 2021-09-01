@@ -29,6 +29,12 @@
     "noem/integration-test": "dev-main",
     "noem/composer-file-embed": "dev-master"
   },
+  "config": {
+    "preferred-install": {
+      "noem/*": "source",
+      "*": "dist"
+    }
+  },
   "extra": {
     "noem": {
       "factories": "factories.php",
