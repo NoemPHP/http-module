@@ -12,7 +12,6 @@ use Noem\Container\Attribute\WithAttr;
 use Noem\Container\AttributeAwareContainer;
 use Noem\Container\Container;
 use Noem\Container\ContainerHtmlRenderer;
-use Noem\Http\Attribute\Middleware;
 use Noem\Http\Attribute\Route;
 use Noem\Http\HttpRequestEvent;
 use Noem\Http\ResponseEmitter;
@@ -115,6 +114,12 @@ return [
 
         return new RouteLoader($i, $c, ...$routeIds);
     },
+    'http.content-type' =>
+        #[Tag('http.middleware', 30)]
+        fn() => new Middlewares\ContentType(),
+    'http.payload' =>
+        #[Tag('http.middleware', 45)]
+        fn() => new Middlewares\JsonPayload(),
     'http.fast-route' =>
         #[Tag('http.middleware', 999)]
         fn(#[Id('http.route-loader')] $loader) => new Middlewares\FastRoute(simpleDispatcher($loader)),
