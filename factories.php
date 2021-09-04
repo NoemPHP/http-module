@@ -122,7 +122,9 @@ return [
         fn() => new Middlewares\JsonPayload(),
     'http.fast-route' =>
         #[Tag('http.middleware', 999)]
-        fn(#[Id('http.route-loader')] $loader) => new Middlewares\FastRoute(simpleDispatcher($loader)),
+        fn(
+            #[Id('http.route-loader')] $loader
+        ): Middlewares\FastRoute => new Middlewares\FastRoute(simpleDispatcher($loader)),
     'http.middlewares' =>
         #[Description(
             'The list of PSR-15 Middlewares to use. 
