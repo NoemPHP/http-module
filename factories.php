@@ -14,8 +14,10 @@ use Noem\Container\Container;
 use Noem\Container\ContainerHtmlRenderer;
 use Noem\Http\Attribute\Route;
 use Noem\Http\HttpRequestEvent;
+use Noem\Http\HttpRequestListener;
 use Noem\Http\ResponseEmitter;
 use Noem\Http\RouteLoader;
+use Noem\State\StateMachineInterface;
 use Noem\StateMachineModule\Attribute\Action;
 use Noem\StateMachineModule\Attribute\OnEntry;
 use Noem\StateMachineModule\Attribute\State;
@@ -145,10 +147,7 @@ return [
     'request-listener' =>
         #[Tag('event-listener')]
         fn(
-            ContainerInterface $c
-        ) => function (
-            HttpRequestEvent $request,
-        ) use ($c) {
-            $c->get('state-machine')->action($request);
-        },
+            #[Id('state-machine')] StateMachineInterface $stateMachine
+        ): HttpRequestListener => new HttpRequestListener($stateMachine),
+
 ];
