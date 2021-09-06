@@ -15,6 +15,7 @@ use Relay\RequestHandler;
 
 class RouteLoader
 {
+
     /**
      * @var string[]
      */
@@ -38,18 +39,29 @@ class RouteLoader
             $handler = $this->container->get($id);
             foreach ($attributesOfId as $att) {
                 assert($att instanceof Route);
-                $r->addRoute($att->method, $att->path, function (
+
+                $r->addRoute($att->method, $this->getPath($att), function (
                     ServerRequestInterface $request,
                     RequestHandler $requestHandler
                 ) use ($handler) {
-                    $this->invoker->call(
+                    return $this->invoker->call(
                         $handler,
                         [
-                            ServerRequestInterface::class => $request
+                            ServerRequestInterface::class => $request,
                         ]
                     );
                 });
             }
         }
+    }
+
+    private function getPath(Route $route)
+    {
+        $path = $route->path;
+        if (str_starts_with('@', $path)) {
+            return $this->container->get(substr($path, 1));
+        }
+
+        return $path;
     }
 }
