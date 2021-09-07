@@ -12,10 +12,13 @@ use Noem\Container\Attribute\WithAttr;
 use Noem\Container\AttributeAwareContainer;
 use Noem\Container\Container;
 use Noem\Container\ContainerHtmlRenderer;
+use Noem\Http\Attribute\Middleware;
 use Noem\Http\Attribute\Route;
 use Noem\Http\HttpRequestEvent;
 use Noem\Http\HttpRequestListener;
+use Noem\Http\MiddlewareAttributeLoader;
 use Noem\Http\ResponseEmitter;
+use Noem\Http\RouteAwareMiddlewareCollection;
 use Noem\Http\RouteLoader;
 use Noem\State\StateMachineInterface;
 use Noem\StateMachineModule\Attribute\Action;
@@ -43,12 +46,17 @@ return [
     'action.http-ready' =>
         #[Action(state: 'http-ready')]
         fn(
-            #[Id('http.request-handler')] RequestHandlerInterface $requestHandler,
-            ResponseEmitter $emitter
+//            #[Id('http.request-handler')] RequestHandlerInterface $requestHandler,
+            RouteAwareMiddlewareCollection $middlewareCollection,
+            ResponseEmitter                $emitter
         ) => function (
-            HttpRequestEvent $request
-        ) use ($requestHandler, $emitter) {
-            $request->setResponse($requestHandler->handle($request->request()));
+            HttpRequestEvent $requestEvent
+        ) use ($middlewareCollection, $emitter) {
+            $request = $requestEvent->request();
+            $queue = $middlewareCollection->forRequest($request);
+            $queue[] = new Middlewares\RequestHandler();
+            $requestHandler = new Relay($queue);
+            $requestEvent->setResponse($requestHandler->handle($request));
         },
     'http.request' =>
         function () {
@@ -63,70 +71,32 @@ return [
         function (#[Id('http.request')] ServerRequestInterface $request) {
             return new HttpRequestEvent($request);
         },
-    //    'http.home-route' =>
-    //        #[Route('/')]
-    //        fn(Container $container) => function (ServerRequestInterface $r) use ($container) {
-    //            $containerContents = (new ContainerHtmlRenderer($container->report()))->render();
-    //            echo <<<HTML
-    //<html>
-    //    <head></head>
-    //    <body>
-    //        <h1>Hello World, Noem here</h1>
-    //        <style>
-    //        thead,
-    //tfoot {
-    //    background-color: #3f87a6;
-    //    color: #fff;
-    //}
-    //
-    //tbody {
-    //    background-color: #e4f0f5;
-    //}
-    //
-    //caption {
-    //    padding: 10px;
-    //    caption-side: bottom;
-    //}
-    //
-    //table {
-    //    border-collapse: collapse;
-    //    border: 2px solid rgb(200, 200, 200);
-    //    letter-spacing: 1px;
-    //    font-family: sans-serif;
-    //    font-size: .8rem;
-    //}
-    //
-    //td,
-    //th {
-    //    border: 1px solid rgb(190, 190, 190);
-    //    padding: 5px 10px;
-    //}
-    //
-    //td {
-    //    text-align: center;
-    //}
-    //</style>
-    //        {$containerContents}
-    //    </body>
-    //</html>
-    //HTML;
-    //        },
     'http.route-loader' => function (InvokerInterface $i, Container $c) {
         $routeIds = $c->getIdsWithAttribute(Route::class);
 
         return new RouteLoader($i, $c, ...$routeIds);
     },
     'http.content-type' =>
-        #[Tag('http.middleware', 30)]
+        #[Middleware(path: '/.*')]
         fn() => new Middlewares\ContentType(),
     'http.payload' =>
-        #[Tag('http.middleware', 45)]
+        #[Middleware(path: '/.*')]
         fn() => new Middlewares\JsonPayload(),
     'http.fast-route' =>
-        #[Tag('http.middleware', 999)]
+        #[Middleware(path: '/.*', priority: 999)]
         fn(
             #[Id('http.route-loader')] $loader
         ): Middlewares\FastRoute => new Middlewares\FastRoute(simpleDispatcher($loader)),
+    Middlewares\ContentType::class =>
+        #[Middleware(path: '/.*', priority: 0)]
+        fn() => new Middlewares\ContentType(),
+    //TODO: Shouldn't the container resolve this without the definition?
+    MiddlewareAttributeLoader::class => fn(Container $c) => new MiddlewareAttributeLoader($c),
+    RouteAwareMiddlewareCollection::class => function (MiddlewareAttributeLoader $attributeLoader) {
+        return new RouteAwareMiddlewareCollection(
+            ...$attributeLoader->load()
+        );
+    },
     'http.middlewares' =>
         #[Description(
             'The list of PSR-15 Middlewares to use. 
