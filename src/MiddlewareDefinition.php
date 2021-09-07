@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace Noem\Http;
@@ -9,11 +10,9 @@ class MiddlewareDefinition
 {
     public function __construct(
         public MiddlewareInterface $middleware,
-        public string              $path,
-        public string              $method,
-        public int                 $priority,
-    )
-    {
-
+        public string $path,
+        public string $method,
+        public int $priority,
+    ) {
     }
 }

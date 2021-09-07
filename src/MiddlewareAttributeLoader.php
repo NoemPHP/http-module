@@ -12,7 +12,6 @@ class MiddlewareAttributeLoader
 {
     public function __construct(private Container $container)
     {
-
     }
 
     /**
@@ -34,7 +33,6 @@ class MiddlewareAttributeLoader
                     $att->method,
                     $att->priority
                 );
-
             }
         };
         return $result;
