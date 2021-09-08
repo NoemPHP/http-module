@@ -23,9 +23,10 @@ class RouteLoader
 
     public function __construct(
         private InvokerInterface $invoker,
-        private Container $container,
-        string ...$routeIds
-    ) {
+        private Container        $container,
+        string                   ...$routeIds
+    )
+    {
         $this->routeIds = $routeIds;
     }
 
@@ -39,24 +40,44 @@ class RouteLoader
             $handler = $this->container->get($id);
             foreach ($attributesOfId as $att) {
                 assert($att instanceof Route);
+                foreach ($this->getMethods($att->method) as $method) {
 
-                $r->addRoute($att->method, $this->getPath($att), function (
-                    ServerRequestInterface $request,
-                    RequestHandler $requestHandler
-                ) use ($handler) {
-                    return $this->invoker->call(
-                        $handler,
-                        [
-                            ServerRequestInterface::class => $request,
-                        ]
-                    );
-                });
+                    $r->addRoute(
+                        $method,
+                        $this->getPath($att),
+                        function (
+                            ServerRequestInterface $request,
+                            RequestHandler         $requestHandler
+                        ) use ($handler) {
+                            return $this->invoker->call(
+                                $handler,
+                                [
+                                    ServerRequestInterface::class => $request,
+                                ]
+                            );
+                        });
+                }
             }
         }
     }
 
-    private function getMethods(Route $route): array
+    private function getMethods(int $methodFlags): iterable
     {
+        if (($methodFlags & Route::GET) == Route::GET) {
+            yield 'GET';
+        }
+        if (($methodFlags & Route::POST) == Route::POST) {
+            yield 'POST';
+        }
+        if (($methodFlags & Route::PUT) == Route::PUT) {
+            yield 'PUT';
+        }
+        if (($methodFlags & Route::DELETE) == Route::DELETE) {
+            yield 'DELETE';
+        }
+        if (($methodFlags & Route::PATCH) == Route::PATCH) {
+            yield 'PATCH';
+        }
     }
 
     private function getPath(Route $route)

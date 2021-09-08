@@ -19,7 +19,7 @@ class Route
     public const DELETE = 1 << 3;
     public const PATCH = 1 << 4;
 
-    public function __construct(public string $path, int $method = Route::GET)
+    public function __construct(public string $path, public int $method = Route::GET)
     {
     }
 }
