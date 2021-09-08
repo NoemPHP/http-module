@@ -23,10 +23,9 @@ class RouteLoader
 
     public function __construct(
         private InvokerInterface $invoker,
-        private Container        $container,
-        string                   ...$routeIds
-    )
-    {
+        private Container $container,
+        string ...$routeIds
+    ) {
         $this->routeIds = $routeIds;
     }
 
@@ -41,13 +40,12 @@ class RouteLoader
             foreach ($attributesOfId as $att) {
                 assert($att instanceof Route);
                 foreach ($this->getMethods($att->method) as $method) {
-
                     $r->addRoute(
                         $method,
                         $this->getPath($att),
                         function (
                             ServerRequestInterface $request,
-                            RequestHandler         $requestHandler
+                            RequestHandler $requestHandler
                         ) use ($handler) {
                             return $this->invoker->call(
                                 $handler,
@@ -55,7 +53,8 @@ class RouteLoader
                                     ServerRequestInterface::class => $request,
                                 ]
                             );
-                        });
+                        }
+                    );
                 }
             }
         }
