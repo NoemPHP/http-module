@@ -11,7 +11,7 @@ class MiddlewareDefinition
     public function __construct(
         public MiddlewareInterface $middleware,
         public string $path,
-        public string $method,
+        public array $methods,
         public int $priority,
     ) {
     }

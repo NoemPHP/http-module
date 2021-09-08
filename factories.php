@@ -17,6 +17,7 @@ use Noem\Http\Attribute\Middleware;
 use Noem\Http\Attribute\Route;
 use Noem\Http\HttpRequestEvent;
 use Noem\Http\HttpRequestListener;
+use Noem\Http\Method;
 use Noem\Http\MiddlewareAttributeLoader;
 use Noem\Http\ResponseEmitter;
 use Noem\Http\RouteAwareMiddlewareCollection;
@@ -41,13 +42,13 @@ use Relay\Relay;
 use function FastRoute\simpleDispatcher;
 
 return [
-    Psr17Factory::class=>
+    Psr17Factory::class =>
         #[Alias(RequestFactoryInterface::class)]
         #[Alias(ResponseFactoryInterface::class)]
         #[Alias(ServerRequestFactoryInterface::class)]
         #[Alias(StreamFactoryInterface::class)]
         #[Alias(UriFactoryInterface::class)]
-        fn()=>new Psr17Factory(),
+        fn() => new Psr17Factory(),
     'state.http-ready' =>
         #[State(name: 'http-ready', parent: 'on')]
         fn() => state(),
@@ -96,7 +97,7 @@ return [
         #[Middleware(path: '/.*')]
         fn() => new Middlewares\JsonPayload(),
     'http.fast-route' =>
-        #[Middleware(path: '/.*', priority: 999)]
+        #[Middleware(path: '/.*', priority: 999, methods: Method::GET | Method::POST)]
         fn(
             #[Id('http.route-loader')] $loader
         ): Middlewares\FastRoute => new Middlewares\FastRoute(simpleDispatcher($loader)),

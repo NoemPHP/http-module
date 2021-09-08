@@ -27,7 +27,7 @@ class RouteAwareMiddlewareCollection
         $uri = rawurldecode($request->getUri()->getPath());
         $result = [];
         foreach ($this->middlewareDefinitions as $definition) {
-            if ($request->getMethod() !== $definition->method) {
+            if (!in_array($request->getMethod(), $definition->methods)) {
                 continue;
             }
             if (!preg_match('~' . $definition->path . '~', $uri)) {

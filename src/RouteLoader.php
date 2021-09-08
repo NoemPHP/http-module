@@ -39,7 +39,7 @@ class RouteLoader
             $handler = $this->container->get($id);
             foreach ($attributesOfId as $att) {
                 assert($att instanceof Route);
-                foreach ($this->getMethods($att->method) as $method) {
+                foreach (Method::arrayFromFlags($att->method) as $method) {
                     $r->addRoute(
                         $method,
                         $this->getPath($att),
@@ -57,25 +57,6 @@ class RouteLoader
                     );
                 }
             }
-        }
-    }
-
-    private function getMethods(int $methodFlags): iterable
-    {
-        if (($methodFlags & Route::GET) == Route::GET) {
-            yield 'GET';
-        }
-        if (($methodFlags & Route::POST) == Route::POST) {
-            yield 'POST';
-        }
-        if (($methodFlags & Route::PUT) == Route::PUT) {
-            yield 'PUT';
-        }
-        if (($methodFlags & Route::DELETE) == Route::DELETE) {
-            yield 'DELETE';
-        }
-        if (($methodFlags & Route::PATCH) == Route::PATCH) {
-            yield 'PATCH';
         }
     }
 

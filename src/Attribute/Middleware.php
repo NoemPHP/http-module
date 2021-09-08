@@ -5,10 +5,11 @@ namespace Noem\Http\Attribute;
 use Attribute;
 use Nette\Schema\Expect;
 use Nette\Schema\Processor;
+use Noem\Http\Method;
 
 /**
  * @property string path
- * @property string method
+ * @property int methods
  * @property int priority
  */
 #[Attribute(Attribute::TARGET_METHOD | Attribute::TARGET_FUNCTION | Attribute::IS_REPEATABLE)]
@@ -20,12 +21,12 @@ class Middleware
     public function __construct(...$props)
     {
         $props = array_merge([
-            'method' => 'GET',
+            'methods' => Method::GET,
             'priority' => 50
         ], $props);
         $schema = Expect::structure([
             'path' => Expect::string(),
-            'method' => Expect::string(),
+            'methods' => Expect::int(),
             'priority' => Expect::int(),
         ]);
         $processor = new Processor();

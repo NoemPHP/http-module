@@ -30,7 +30,7 @@ class MiddlewareAttributeLoader
                 $result[] = new MiddlewareDefinition(
                     $this->container->get($id),
                     $att->path,
-                    $att->method,
+                    iterator_to_array(Method::arrayFromFlags($att->methods)),
                     $att->priority
                 );
             }
