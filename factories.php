@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use FastRoute\RouteCollector;
 use Invoker\InvokerInterface;
+use Noem\Container\Attribute\Alias;
 use Noem\Container\Attribute\Description;
 use Noem\Container\Attribute\Id;
 use Noem\Container\Attribute\Tag;
@@ -27,7 +28,12 @@ use Noem\StateMachineModule\Attribute\State;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7Server\ServerRequestCreator;
 use Psr\Container\ContainerInterface;
+use Psr\Http\Message\RequestFactoryInterface;
+use Psr\Http\Message\ResponseFactoryInterface;
+use Psr\Http\Message\ServerRequestFactoryInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use Psr\Http\Message\StreamFactoryInterface;
+use Psr\Http\Message\UriFactoryInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Relay\Relay;
@@ -35,6 +41,13 @@ use Relay\Relay;
 use function FastRoute\simpleDispatcher;
 
 return [
+    Psr17Factory::class=>
+        #[Alias(RequestFactoryInterface::class)]
+        #[Alias(ResponseFactoryInterface::class)]
+        #[Alias(ServerRequestFactoryInterface::class)]
+        #[Alias(StreamFactoryInterface::class)]
+        #[Alias(UriFactoryInterface::class)]
+        fn()=>new Psr17Factory(),
     'state.http-ready' =>
         #[State(name: 'http-ready', parent: 'on')]
         fn() => state(),

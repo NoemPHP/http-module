@@ -11,7 +11,7 @@ use Nette\Schema\Processor;
  * @property string method
  * @property int priority
  */
-#[Attribute(Attribute::TARGET_METHOD | Attribute::TARGET_FUNCTION)]
+#[Attribute(Attribute::TARGET_METHOD | Attribute::TARGET_FUNCTION | Attribute::IS_REPEATABLE)]
 class Middleware
 {
     private array $props;

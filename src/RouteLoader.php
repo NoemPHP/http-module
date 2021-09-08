@@ -55,6 +55,10 @@ class RouteLoader
         }
     }
 
+    private function getMethods(Route $route): array
+    {
+    }
+
     private function getPath(Route $route)
     {
         $path = $route->path;

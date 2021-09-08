@@ -13,7 +13,13 @@ use Attribute;
 class Route
 {
 
-    public function __construct(public string $path, public $method = 'GET')
+    public const GET = 1 << 0;
+    public const POST = 1 << 1;
+    public const PUT = 1 << 2;
+    public const DELETE = 1 << 3;
+    public const PATCH = 1 << 4;
+
+    public function __construct(public string $path, int $method = Route::GET)
     {
     }
 }
