@@ -8,6 +8,7 @@
     convertNoticesToExceptions="true"
     convertWarningsToExceptions="true"
     xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd"
+    printerClass="NunoMaduro\Collision\Adapters\Phpunit\Printer"
 >
     <coverage processUncoveredFiles="true">
         <include>
