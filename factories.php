@@ -94,7 +94,7 @@ return [
         #[Middleware(path: '/.*')]
         fn() => new Middlewares\ContentType(),
     'http.payload' =>
-        #[Middleware(path: '/.*')]
+        #[Middleware(path: '/.*', methods: Method::POST)]
         fn() => new Middlewares\JsonPayload(),
     'http.fast-route' =>
         #[Middleware(path: '/.*', priority: 999, methods: Method::GET | Method::POST)]
