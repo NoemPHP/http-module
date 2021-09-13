@@ -2,17 +2,13 @@
 
 declare(strict_types=1);
 
-use FastRoute\RouteCollector;
 use Invoker\InvokerInterface;
 use Noem\Container\Attribute\Alias;
 use Noem\Container\Attribute\Description;
 use Noem\Container\Attribute\Id;
 use Noem\Container\Attribute\Tag;
 use Noem\Container\Attribute\Tagged;
-use Noem\Container\Attribute\WithAttr;
-use Noem\Container\AttributeAwareContainer;
 use Noem\Container\Container;
-use Noem\Container\ContainerHtmlRenderer;
 use Noem\Http\Attribute\Middleware;
 use Noem\Http\Attribute\Route;
 use Noem\Http\HttpRequestEvent;
@@ -28,7 +24,6 @@ use Noem\StateMachineModule\Attribute\OnEntry;
 use Noem\StateMachineModule\Attribute\State;
 use Nyholm\Psr7\Factory\Psr17Factory;
 use Nyholm\Psr7Server\ServerRequestCreator;
-use Psr\Container\ContainerInterface;
 use Psr\Http\Message\RequestFactoryInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
 use Psr\Http\Message\ServerRequestFactoryInterface;
@@ -60,9 +55,8 @@ return [
     'action.http-ready' =>
         #[Action(state: 'http-ready')]
         fn(
-//            #[Id('http.request-handler')] RequestHandlerInterface $requestHandler,
             RouteAwareMiddlewareCollection $middlewareCollection,
-            ResponseEmitter                $emitter
+            ResponseEmitter $emitter
         ) => function (
             HttpRequestEvent $requestEvent
         ) use ($middlewareCollection, $emitter) {
@@ -117,17 +111,18 @@ return [
             Fed from the "http.middleware" tag, but may be modified by extensions'
         )]
         fn(#[Tagged('http.middleware')] MiddlewareInterface ...$handlers): array => $handlers,
-    'http.request-handler' => function (
-        #[Id('http.middlewares')] MiddlewareInterface ...$handlers
-    ): RequestHandlerInterface {
-        $middlewares = [
-            new Middlewares\ContentType(),
-            ...$handlers,
-            new Middlewares\RequestHandler(),
-        ];
+    'http.request-handler' =>
+        function (
+            #[Id('http.middlewares')] MiddlewareInterface ...$handlers
+        ): RequestHandlerInterface {
+            $middlewares = [
+                new Middlewares\ContentType(),
+                ...$handlers,
+                new Middlewares\RequestHandler(),
+            ];
 
-        return new Relay($middlewares);
-    },
+            return new Relay($middlewares);
+        },
     'request-listener' =>
         #[Tag('event-listener')]
         fn(

@@ -15,14 +15,14 @@ use Noem\Http\Method;
 #[Attribute(Attribute::TARGET_METHOD | Attribute::TARGET_FUNCTION | Attribute::IS_REPEATABLE)]
 class Middleware
 {
-    private array $props;
 
+    private array $props;
 
     public function __construct(...$props)
     {
         $props = array_merge([
-            'methods' => Method::GET,
-            'priority' => 50
+            'methods' => Method::ALL,
+            'priority' => 50,
         ], $props);
         $schema = Expect::structure([
             'path' => Expect::string(),
@@ -45,6 +45,7 @@ class Middleware
                 )
             );
         }
+
         return $this->props[$key];
     }
 
